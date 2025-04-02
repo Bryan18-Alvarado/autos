@@ -16,10 +16,10 @@ export class Car {
   @Column({ type: 'int4', nullable: false })
   year: number;
 
-  @Column({ type: 'int', default: 0 }) //conteo de cantidad de nuestros carros.
+  @Column({ type: 'int4', default: 0 }) //conteo de cantidad de nuestros carros.
   stock: number;
 
-  @Column({ type: 'numeric' })
+  @Column({ type: 'float', default: 0 })
   price: number;
 
   @Column({ type: 'bool', default: true })
