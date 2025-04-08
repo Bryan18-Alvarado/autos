@@ -38,6 +38,7 @@ export class CarsService {
   async remove(id: number) {
     const car = await this.findOne(id);
     await this.carRepository.remove(car);
+    return `carro con id ${id} fue eliminado`;
   }
 
   async findOne(id: number) {
