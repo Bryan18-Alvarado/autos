@@ -8,6 +8,7 @@ import { BrandsService } from './modules/brands/services/brands.service';
 import { CarsModule } from './modules/cars/cars.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -24,6 +25,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       autoLoadEntities: true,
       synchronize: true,
     }),
+
+    CommonModule,
   ],
   controllers: [AppController, CarsController, BrandsController],
   providers: [AppService, CarsService, BrandsService],
