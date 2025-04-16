@@ -1,14 +1,25 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CarsService } from '../services/cars.service';
-import { CreateCarDto } from '../dto/car.dto';
+import { CreateCarDto, UpdateCarDto } from '../dto/car.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('cars')
 export class CarsController {
   constructor(private readonly carsService: CarsService) {}
 
   @Get()
-  findAll() {
-    return this.carsService.findAll();
+  findAll(@Query() PaginationDto: PaginationDto) {
+    // console.log(PaginationDto);
+    return this.carsService.findAll(PaginationDto);
   }
 
   @Post()
@@ -19,6 +30,11 @@ export class CarsController {
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.carsService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: number, @Body() updateCarDto: UpdateCarDto) {
+    return this.carsService.update(id, updateCarDto);
   }
 
   @Delete(':id')
