@@ -32,7 +32,7 @@
 3. Clonar el archivo `.env.template` y renombrarlo a `.env`
 4. Cambiar las variables de entorno
 5. Crear la base de datos
-6. Levantar el api `npm run start:dev`
+6. Levantar el api: `npm run start:dev`
 
 ## Compile and run the project
 

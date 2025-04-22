@@ -5,11 +5,11 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateCarDto, UpdateCarDto } from '../dto/car.dto';
+import { CreateCarDto, FilterCarDto, UpdateCarDto } from '../dto/car.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Car } from '../entities/car.entity';
-import { Repository } from 'typeorm';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { FindOptionsWhere, ILike, Repository } from 'typeorm';
+import { Brand } from '../../brands/entities/brand.entity';
 
 @Injectable()
 export class CarsService {
@@ -18,13 +18,34 @@ export class CarsService {
   constructor(
     @InjectRepository(Car)
     private readonly carRepository: Repository<Car>,
+    @InjectRepository(Brand)
+    private readonly brandRepository: Repository<Brand>,
   ) {}
 
-  findAll(PaginationDto: PaginationDto) {
-    const { limit = 3, offset = 0 } = PaginationDto;
+  // findAll(paginationDto: PaginationDto) {
+  //   const { limit = 3, offset = 0 } = paginationDto;
+  //   return this.carRepository.find({
+  //     take: limit,
+  //     skip: offset,
+  //   });
+  // }
+
+  findAll(params?: FilterCarDto) {
+    const { limit, offset, description } = params || {};
+    const where: FindOptionsWhere<Car> = {};
+
+    if (description) {
+      where.description = ILike(`%${description}%`);
+    }
+
     return this.carRepository.find({
+      order: { id: 'ASC' },
+      where,
       take: limit,
       skip: offset,
+      relations: {
+        brand: true,
+      },
     });
   }
 
@@ -34,64 +55,81 @@ export class CarsService {
       await this.carRepository.save(car);
       return car;
     } catch (error) {
-      //   console.error(error);
-      //   throw new InternalServerErrorException('Ayuda!');
+      // console.log(error);
+      // throw new InternalServerErrorException('Ayuda!');
       this.handleDBException(error);
     }
   }
 
-  async update(id: number, updateCarDto: UpdateCarDto) {
-    const car = await this.carRepository.findOne({ where: { id } });
+  async findOne(id: number) {
+    const car = await this.carRepository.findOne({
+      where: { id: id },
+      relations: { brand: true },
+    });
 
     if (!car) {
-      throw new NotFoundException(`carro con id ${id} no encontrado`);
+      throw new NotFoundException(
+        `Carro con id ${id} no encontrado en la base de datos`,
+      );
     }
+    return car;
+  }
+
+  async update(id: number, changes: UpdateCarDto) {
+    const car = await this.carRepository.findOne({
+      where: { id },
+      relations: { brand: true },
+    });
+
     if (!car) {
-      throw new NotFoundException(`carro con id ${id} no encontrado`);
+      throw new NotFoundException(`Car with id ${id} not found`);
     }
-    try {
-      this.carRepository.merge(car, updateCarDto);
-      await this.carRepository.save(car);
-      return {
-        message: 'registro actualizado con éxito',
-        data: car,
-      };
-    } catch (error) {
-      this.handleDBException(error);
+
+    if (changes.brand_id) {
+      const brand = await this.brandRepository.findOneBy({
+        id: changes.brand_id,
+      });
+      if (!brand) {
+        throw new NotFoundException(
+          `Brand with id ${changes.brand_id} not found`,
+        );
+      }
+      car.brand = brand;
     }
+
+    this.carRepository.merge(car, changes);
+    const updated = await this.carRepository.save(car);
+
+    return {
+      message: 'Registro actualizado correctamente',
+      data: updated,
+    };
   }
 
   // async remove(id: number) {
   //   const car = await this.findOne(id);
   //   await this.carRepository.remove(car);
-  //   return `carro con id ${id} fue eliminado`;
   // }
 
   async remove(id: number) {
     const exists = await this.carRepository.existsBy({ id });
     if (!exists) {
-      throw new NotFoundException(`carro con id ${id} no encontrado`);
+      throw new NotFoundException(`Carro con id ${id} no encontrado`);
     }
-    await this.carRepository.softDelete({ id }); //softDelete es como una eliminacion completa, pero en esta te queda la fecha
+    await this.carRepository.softDelete(id);
     return {
-      message: `Auto con ID ${id} eliminado con exito`,
-      deleteAt: new Date(),
+      message: `Auto con ID ${id} eliminado con éxito`,
+      deletedAt: new Date(),
     };
   }
-  async findOne(id: number) {
-    const car = await this.carRepository.findOneBy({ id });
-    if (!car) {
-      throw new NotFoundException(`carro con id ${id} no encontrado`);
-    }
-    return car;
-  }
+
   private handleDBException(error: any) {
     if (error.code === '23505') throw new BadRequestException(error.detail);
 
     this.logger.error(error);
 
     throw new InternalServerErrorException(
-      'Ocurrió un error inesperado. Intente más tarde',
+      'Error inesperado, verifique los registros del servidor',
     );
   }
 }
