@@ -5,12 +5,12 @@ import { SeedService } from './seed.service';
 export class SeedController {
   constructor(private readonly seedService: SeedService) {}
 
-  @Get('cars/seed')
+  @Get('cars')
   executeSeed() {
     return this.seedService.runSeedCars();
   }
 
-  @Get('brands/seed')
+  @Get('brands')
   executeSeedBrands() {
     return this.seedService.runSeedBrands();
   }
