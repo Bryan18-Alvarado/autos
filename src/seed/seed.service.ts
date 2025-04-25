@@ -24,17 +24,6 @@ export class SeedService {
     return 'SEED BRANDS EXECUTED';
   }
 
-  private async insertNewBrands() {
-    await this.brandsService.deleteAllBrands();
-    const brands = initialData.brands;
-    const insertPromises: Promise<Brand | undefined>[] = [];
-    brands.forEach((brand) => {
-      insertPromises.push(this.brandsService.create(brand));
-    });
-
-    return true;
-  }
-
   private async insertNewCars() {
     await this.carsService.deleteAllCars();
 
@@ -43,6 +32,18 @@ export class SeedService {
     cars.forEach((car) => {
       insertPromises.push(this.carsService.create(car));
     });
+    await Promise.all(insertPromises);
+    return true;
+  }
+
+  private async insertNewBrands() {
+    await this.brandsService.deleteAllBrands();
+    const brands = initialData.brands;
+    const insertPromises: Promise<Brand | undefined>[] = [];
+    brands.forEach((brand) => {
+      insertPromises.push(this.brandsService.create(brand));
+    });
+    await Promise.all(insertPromises);
 
     return true;
   }
